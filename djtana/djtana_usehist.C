@@ -5,6 +5,7 @@ void djtana_usehist(TString inputhistname, TString inputtplname, TString outputn
                     Float_t jetptmin, Float_t jetptmax, Float_t jetetamin, Float_t jetetamax,
                     Int_t signalMC, Int_t corrReso, Int_t corrNclo)
 {
+  if(collisionsyst.Contains("pp")) collisionsyst = "pp";
   int arguerr(TString collisionsyst, Int_t irecogen);
   if(arguerr(collisionsyst, irecogen)) return;
 
@@ -27,13 +28,13 @@ void djtana_usehist(TString inputhistname, TString inputtplname, TString outputn
       if(gethists(inftpl, "tpl")) return;
     }
 
+  TString texjetpt = jetptmax<999?Form("%s < p_{T}^{jet} < %s GeV/c",xjjc::number_remove_zero(jetptmin).c_str(),xjjc::number_remove_zero(jetptmax).c_str()):Form("p_{T}^{jet} > %s GeV/c",xjjc::number_remove_zero(jetptmin).c_str());
   std::vector<TString> vectex =
     {
       "|y^{D}| < 2",
-      Form("%s < |#eta^{jet}| < %s",xjjc::number_remove_zero(jetetamin).c_str(),xjjc::number_remove_zero(jetetamax).c_str()),
+      texjetpt,
+      (jetetamin<=0?Form("|#eta^{jet}| < %s",xjjc::number_remove_zero(jetetamax).c_str()):Form("%s < |#eta^{jet}| < %s",xjjc::number_remove_zero(jetetamin).c_str(),xjjc::number_remove_zero(jetetamax).c_str())),
     };
-  TString texjetpt = jetptmax<999?Form("%s < p_{T}^{jet} < %s GeV/c",xjjc::number_remove_zero(jetptmin).c_str(),xjjc::number_remove_zero(jetptmax).c_str()):Form("p_{T}^{jet} > %s GeV/c",xjjc::number_remove_zero(jetptmin).c_str());
-  vectex.push_back(texjetpt);
 
   xjjroot::dfitter* dft = new xjjroot::dfitter("Y");
   
@@ -68,7 +69,7 @@ void djtana_usehist(TString inputhistname, TString inputtplname, TString outputn
                   for(int j=0;j<nDrBins;j++)
                     {
                       c->cd(j+1);
-                      vectex.push_back(texpt);
+                      vectex.insert(vectex.begin(), texpt);
                       vectex.push_back(Form("%s < %s < %s",xjjc::number_remove_zero(drBins[j]).c_str(),"r",xjjc::number_remove_zero(drBins[j+1]).c_str()));
                       dft->fit(ahHistoRMass[l][i][j], ahHistoRMassSignal[i][j], ahHistoRMassSwapped[i][j], collisionsyst, vectex);
                       ahSignalRraw[l][i]->SetBinContent(j+1, dft->GetY());
@@ -79,11 +80,28 @@ void djtana_usehist(TString inputhistname, TString inputtplname, TString outputn
                       cpull->cd(j+1);
                       pPull[j]->cd();
                       if(dft->drawpull()) return;
-                      vectex.pop_back();
+                      TCanvas* c_paper = new TCanvas("c_paper", "", 600, 600);
+                      c_paper->cd();
+                      c_paper->SetFillColor(0);
+                      c_paper->SetBorderMode(0);
+                      c_paper->SetBorderSize(2);
+                      c_paper->SetLeftMargin(0.185);
+                      c_paper->SetRightMargin(0.025);
+                      c_paper->SetTopMargin(0.080);
+                      c_paper->SetBottomMargin(0.150);
+                      c_paper->SetFrameBorderMode(0);
+                      c_paper->SetFrameLineWidth(2);
+                      if(dft->drawfitpaper(ispp?"27.4 pb^{-1} (5.02 TeV pp)":"404 #mub^{-1} (5.02 TeV PbPb)", vectex)) return;
+                      c_paper->SaveAs(Form("plotfitspaper/cmasspaper_%s_%s_pt_%d_%s_%d.pdf",outputname.Data(),tRef[l].Data(),i,"dr",j));
+                      delete c_paper;
+                      vectex.erase(vectex.begin());
                       vectex.pop_back();
                     }
                   c->SaveAs(Form("plotfits/cmass_%s_%s_pt_%d_%s.pdf",outputname.Data(),tRef[l].Data(),i,"dr"));
                   cpull->SaveAs(Form("plotfitspull/cmasspull_%s_%s_pt_%d_%s.pdf",outputname.Data(),tRef[l].Data(),i,"dr"));
+                  for(int j=0;j<nDrBins;j++)
+                    {
+                    }
                   for(int j=0;j<nDrBins;j++) { delete pFit[j]; delete pPull[j]; }
                   delete cpull;
                   delete c;
@@ -91,10 +109,10 @@ void djtana_usehist(TString inputhistname, TString inputtplname, TString outputn
               else // reflected cone
                 {
                   TCanvas* c = new TCanvas("c", "", 600, 600);
-                  vectex.push_back(texpt);
+                  vectex.insert(vectex.begin(), texpt);
                   vectex.push_back(Form("0 < %s < 0.3","r"));
                   dft->fit(ahHistoRMassRef[i], ahHistoRMassSignalRef[i], ahHistoRMassSwappedRef[i], collisionsyst, vectex);
-                  vectex.pop_back();
+                  vectex.erase(vectex.begin());
                   vectex.pop_back();
                   c->SaveAs(Form("plotfits/cmass_%s_%s_pt_%d_%s.pdf",outputname.Data(),tRef[l].Data(),i,"dr"));
                   ahSignalRrawRef[i]->SetBinContent(1, dft->GetY());
@@ -174,7 +192,7 @@ void djtana_usehist(TString inputhistname, TString inputtplname, TString outputn
           for(int l=0;l<nMeBins;l++)
             {
               c->cd(l+1);
-              vectex.push_back(texpt);
+              vectex.insert(vectex.begin(), texpt);
               vectex.push_back(Form("0 < %s < 0.5","r"));
               dft->fit(ahHistoRMassMe[l][i], ahHistoRMassSignalMe[i], ahHistoRMassSwappedMe[i], collisionsyst, vectex);
               cpull->cd(l+1);
@@ -183,7 +201,7 @@ void djtana_usehist(TString inputhistname, TString inputtplname, TString outputn
               cpull->cd(l+1);
               pPull[l]->cd();
               if(dft->drawpull()) return;
-              vectex.pop_back();
+              vectex.erase(vectex.begin());
               vectex.pop_back();
               Double_t density = dft->GetY();
               Double_t densityError = dft->GetY()>0?dft->GetYE():0;
@@ -243,9 +261,13 @@ void djtana_usehist(TString inputhistname, TString inputtplname, TString outputn
           ahSignalRsubMe[i]->Add(ahSignalRnorm[0][i], ahSignalRnormMe[0][i], 1, -1);
           ahSignalRsubMe[i]->Add(ahSignalRnormMe[1][i], -1);
           ahSignalRsubMe[i]->Add(ahSignalRnormMe[2][i]);
+          ahSignalRbkgMe[i]->Add(ahSignalRnormMe[0][i], ahSignalRnormMe[1][i]);
+          ahSignalRbkgMe[i]->Add(ahSignalRnormMe[2][i], -1);
         }
       ahSignalRsubUncorr[i] = (TH1F*)ahSignalRsub[i]->Clone(ahSignalRsubUncorr[i]->GetName());
       ahSignalRsubUncorrMe[i] = (TH1F*)ahSignalRsubMe[i]->Clone(ahSignalRsubUncorrMe[i]->GetName());
+      ahSignalRsubRaw[i] = (TH1F*)ahSignalRsub[i]->Clone(ahSignalRsubRaw[i]->GetName());
+      ahSignalRsubRawMe[i] = (TH1F*)ahSignalRsubMe[i]->Clone(ahSignalRsubRawMe[i]->GetName());
       for(int j=0;j<nDrBins;j++)
         {
           Float_t corrfactor = 1., corrfactorSg = 1;

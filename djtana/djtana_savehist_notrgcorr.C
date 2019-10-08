@@ -7,6 +7,7 @@ void djtana_savehist(TString inputname, TString outputname,
                      Int_t signalMC=1, 
                      Int_t maxevt=-1, Int_t doDgenweight=1)
 {
+  if(collisionsyst.Contains("pp")) collisionsyst = "pp";
   int arguerr(TString collisionsyst, Int_t irecogen, Int_t isMC, Int_t gensmearpt, Int_t gensmearphi);
   if(arguerr(collisionsyst, irecogen, isMC, gensmearpt, gensmearphi)) return;
 
@@ -15,7 +16,6 @@ void djtana_savehist(TString inputname, TString outputname,
   Int_t ispp = collisionsyst=="pp"?1:0;
   djtcorr::setParameters(ispp);
   djtweight::init();
-  djthlt::init();
  
   djet djt(inputname, ispp, isMC);
   // djt.setjetcut(jetptmin, jetetamin, jetetamax);
@@ -57,19 +57,6 @@ void djtana_savehist(TString inputname, TString outputname,
       Float_t evtweight = isMC?(djt.pthatweight*cweight):1.;
 
       if(!isMC && !djthlt::checkHlt(djt, jetptmin, ispp, fileno)) continue;
-
-      Float_t efftrigweight = 1.;
-      if(!isMC)
-        {
-          Float_t leadpt = 0;
-          for(int jj=0;jj<djt.njet_akpu3pf;jj++)
-            {
-              if(TMath::Abs((*djt.jeteta_akpu3pf)[jj]) > 1.6) continue;
-              if((*djt.jetpt_akpu3pf)[jj]>leadpt) leadpt = (*djt.jetpt_akpu3pf)[jj];
-            }
-          // if(leadpt<=0) { std::cout<<"warning: cannot find leading jetpt"<<std::endl; continue; }
-          if(leadpt>0) efftrigweight = djthlt::getjettriggerweight(jetptmin, leadpt, ispp);
-        }
 
       // loop jets
       for(int jj=0;jj<*(djt.anjet[irecogen]);jj++)
@@ -128,9 +115,9 @@ void djtana_savehist(TString inputname, TString outputname,
                       if(djtDsel < 0) {std::cout<<"error: invalid option for isDselected()"<<std::endl; return;}
                       if(!djtDsel) continue;
                       Float_t Dmass = irecogen%2==0?(*djt.Dmass)[jd]:DZERO_MASS;
-                      ahHistoRMass[l][ibinpt][ibindr]->Fill(Dmass, evtweight*weightDgen*efftrigweight / nsjet);
+                      ahHistoRMass[l][ibinpt][ibindr]->Fill(Dmass, evtweight*weightDgen / nsjet);
                       if(deltaR[l] < 0.3 && l)
-                        ahHistoRMassRef[ibinpt]->Fill(Dmass, evtweight*weightDgen*efftrigweight / nsjet);
+                        ahHistoRMassRef[ibinpt]->Fill(Dmass, evtweight*weightDgen / nsjet);
                     }
                 } //! loopD
               // mix-UE D
@@ -157,7 +144,7 @@ void djtana_savehist(TString inputname, TString outputname,
                   if(djtDsel < 0) { std::cout<<"error: invalid option for isDselected_mix()"<<std::endl; return; }
                   if(!djtDsel) continue;
                   Float_t Dmass = irecogen%2==0?(*djt.Dmass)[jd]:DZERO_MASS;
-                  ahHistoRMassMe[1][ibinpt]->Fill(Dmass, evtweight*weightDgen*efftrigweight / nsjet);
+                  ahHistoRMassMe[1][ibinpt]->Fill(Dmass, evtweight*weightDgen / nsjet);
                 }//! loop UE D
             }
         } //!loop jets
@@ -217,7 +204,7 @@ void djtana_savehist(TString inputname, TString outputname,
                   if(djtDsel < 0) return;
                   if(!djtDsel) continue;
                   Float_t Dmass = irecogen%2==0?(*djt.Dmass)[jd]:DZERO_MASS;
-                  ahHistoRMassMe[0][ibinpt]->Fill(Dmass, evtweight*weightDgen*efftrigweight / nsjet);
+                  ahHistoRMassMe[0][ibinpt]->Fill(Dmass, evtweight*weightDgen / nsjet);
                 }
               // mix-UE D
               for(int jd=0;jd<*(djt.anD_mix[irecogen]);jd++)
@@ -240,7 +227,7 @@ void djtana_savehist(TString inputname, TString outputname,
                   if(djtDsel < 0) return;
                   if(!djtDsel) continue;
                   Float_t Dmass = irecogen%2==0?(*djt.Dmass)[jd]:DZERO_MASS;
-                  ahHistoRMassMe[2][ibinpt]->Fill(Dmass, evtweight*weightDgen*efftrigweight / nsjet);
+                  ahHistoRMassMe[2][ibinpt]->Fill(Dmass, evtweight*weightDgen / nsjet);
                 }
             }
         } //! loop UE jets

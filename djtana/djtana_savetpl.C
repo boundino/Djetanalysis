@@ -6,6 +6,7 @@ void djtana_savetpl(TString inputname, TString outputname,
                     Int_t jescale=0, Int_t gensmearpt=0, Int_t gensmearphi=0, 
                     Int_t maxevt=-1)
 {
+  if(collisionsyst.Contains("pp")) collisionsyst = "pp";
   int arguerr(TString collisionsyst, Int_t irecogen, Int_t gensmearpt, Int_t gensmearphi);
   if(arguerr(collisionsyst, irecogen, gensmearpt, gensmearphi)) return;
 

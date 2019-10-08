@@ -28,10 +28,12 @@ TString tRef[nRefBins] = {"eta", "etaref"};
 const int nMeBins = 3;
 TString tMe[nMeBins] = {"uej", "ued", "uejd"};
 TString tlegMe[nMeBins] = {"MB jets", "MB D", "MB jets, MB D"};
+TString tlegpaperMe[nMeBins] = {"MB jet, Raw D", "Raw jet, MB D", "MB jet, MB D"};
 
 Color_t amcolor[2] = {kBlack, kBlack};
 Style_t amstyle[nRefBins] = {20, 24};
 Style_t amstyleMe[nMeBins] = {24, 25, 28};
+Color_t amcolorMe[nMeBins] = {kRed+2, kAzure-6, kGreen+3};
 
 // Color_t fmcolor[3] = {kAzure-6, kRed+3};
 Color_t fmcolor[3] = {kAzure+3, kRed+3, kGreen+3};
@@ -79,10 +81,13 @@ TH1F* ahHistoRMassMe[nMeBins][nPtBins];
 TH1F* ahSignalRrawMe[nMeBins][nPtBins];
 TH1F* ahSignalRMe[nMeBins][nPtBins];
 TH1F* ahSignalRnormMe[nMeBins][nPtBins];
+TH1F* ahSignalRbkgMe[nPtBins];
 
 TH1F* ahSignalRsub[nPtBins];
+TH1F* ahSignalRsubRaw[nPtBins];
 TH1F* ahSignalRsubUncorr[nPtBins];
 TH1F* ahSignalRsubMe[nPtBins];
+TH1F* ahSignalRsubRawMe[nPtBins];
 TH1F* ahSignalRsubUncorrMe[nPtBins];
 
 //
@@ -203,7 +208,10 @@ int createhists(Option_t* option)
               ahSignalRMe[l][i]->Sumw2();
               ahSignalRnormMe[l][i] = new TH1F(Form("hSignalRnormMe_%s_pt_%d",tMe[l].Data(),i), ";r;", nDrBins, drBins);
               ahSignalRnormMe[l][i]->Sumw2();
-            }
+            } 
+          ahSignalRbkgMe[i] = new TH1F(Form("hSignalRbkgMe_pt_%d",i), ";r;", nDrBins, drBins);
+          ahSignalRbkgMe[i]->Sumw2();
+
           ahSignalRRef[i] = new TH1F(Form("hSignalRRef_pt_%d",i), ";r;", 1, 0, 0.3);
           ahSignalRRef[i]->Sumw2();
           ahSignalRrawRef[i] = new TH1F(Form("hSignalRrawRef_pt_%d",i), ";r;", 1, 0, 0.3);
@@ -211,10 +219,14 @@ int createhists(Option_t* option)
 
           ahSignalRsub[i] = new TH1F(Form("hSignalRsub_pt_%d",i), ";r;", nDrBins, drBins);
           ahSignalRsub[i]->Sumw2();
+          ahSignalRsubRaw[i] = new TH1F(Form("hSignalRsubRaw_pt_%d",i), ";r;", nDrBins, drBins);
+          ahSignalRsubRaw[i]->Sumw2();
           ahSignalRsubUncorr[i] = new TH1F(Form("hSignalRsubUncorr_pt_%d",i), ";r;", nDrBins, drBins);
           ahSignalRsubUncorr[i]->Sumw2();
           ahSignalRsubMe[i] = new TH1F(Form("hSignalRsubMe_pt_%d",i), ";r;", nDrBins, drBins);
           ahSignalRsubMe[i]->Sumw2();
+          ahSignalRsubRawMe[i] = new TH1F(Form("hSignalRsubRawMe_pt_%d",i), ";r;", nDrBins, drBins);
+          ahSignalRsubRawMe[i]->Sumw2();
           ahSignalRsubUncorrMe[i] = new TH1F(Form("hSignalRsubUncorrMe_pt_%d",i), ";r;", nDrBins, drBins);
           ahSignalRsubUncorrMe[i]->Sumw2();
         }
@@ -318,9 +330,13 @@ int writehists(Option_t* option)
               ahSignalRMe[l][i]->Write();
               ahSignalRnormMe[l][i]->Write();
             }
+          ahSignalRbkgMe[i]->Write();
+
           ahSignalRsub[i]->Write();
+          ahSignalRsubRaw[i]->Write();
           ahSignalRsubUncorr[i]->Write();
           ahSignalRsubMe[i]->Write();
+          ahSignalRsubRawMe[i]->Write();
           ahSignalRsubUncorrMe[i]->Write();
         }
       return 0;
@@ -401,9 +417,12 @@ int gethists(TFile* inf, Option_t* option)
             {
               ahSignalRnormMe[l][i] = (TH1F*)inf->Get(Form("hSignalRnormMe_%s_pt_%d",tMe[l].Data(),i));
             }
+          ahSignalRbkgMe[i] = (TH1F*)inf->Get(Form("hSignalRbkgMe_pt_%d",i));
           ahSignalRsub[i] = (TH1F*)inf->Get(Form("hSignalRsub_pt_%d",i));
+          ahSignalRsubRaw[i] = (TH1F*)inf->Get(Form("hSignalRsubRaw_pt_%d",i));
           ahSignalRsubUncorr[i] = (TH1F*)inf->Get(Form("hSignalRsubUncorr_pt_%d",i));
           ahSignalRsubMe[i] = (TH1F*)inf->Get(Form("hSignalRsubMe_pt_%d",i));
+          ahSignalRsubRawMe[i] = (TH1F*)inf->Get(Form("hSignalRsubRawMe_pt_%d",i));
           ahSignalRsubUncorrMe[i] = (TH1F*)inf->Get(Form("hSignalRsubUncorrMe_pt_%d",i));
         }
       return 0;
