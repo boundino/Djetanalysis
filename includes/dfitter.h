@@ -49,6 +49,7 @@ namespace xjjroot
 
     TF1* fit(const TH1* hmass, const TH1* hmassMCSignal, const TH1* hmassMCSwapped, TString collisionsyst="", const std::vector<TString>& vtex=std::vector<TString>());
     Int_t drawfit(TString collisionsyst="", const std::vector<TString>& vtex=std::vector<TString>());
+    Int_t drawfitpaper(TString collisionsyst="", const std::vector<TString>& vtex=std::vector<TString>());
     Int_t drawpull(const std::vector<TString>& vtex=std::vector<TString>());
     Bool_t isFitted() const {return fparamfuns;}
 
@@ -155,10 +156,12 @@ namespace xjjroot
     TF1* clonefun(const TF1* fun, TString fun_name) const;
     void sethist(TH1* h) const;
     void drawCMS(TString collision, TString snn="5.02") const;
-    void drawtex(Double_t x, Double_t y, const char* text, Float_t tsize=0.04, Short_t align=12) const;
+    void drawtex(Double_t x, Double_t y, const char* text, Float_t tsize=0.04, Short_t align=12, Style_t font=42) const;
     void drawleg(TH1* h, TF1* leg_fun_f, TF1* leg_fun_mass, TF1* leg_fun_swap, TF1* leg_fun_background) const;
+    void setleg(TLegend* leg, Float_t size=0.04) const;
     void drawline(Double_t x1, Double_t y1, Double_t x2, Double_t y2, Color_t lcolor=kBlack, Style_t lstyle=1, Width_t lwidth=2) const;
     void setgstyle() const;
+    template <class T> void sethemptystyle(T* hempty, Float_t xtitleoffset=-1, Float_t ytitleoffset=-1, Float_t xtitlesize=-1, Float_t ytitlesize=-1, Float_t xlabelsize=-1, Float_t ylabelsize=-1) const;
   };
 }
 
@@ -406,6 +409,77 @@ Int_t xjjroot::dfitter::drawfit(TString collisionsyst/*=""*/, const std::vector<
       texypos+=texlinespc;
       for(std::vector<TString>::const_iterator it=vtex.begin(); it!=vtex.end(); it++) 
         drawtex(texxpos, texypos=(texypos-texdypos-texlinespc), *it);
+    }
+  return 0;
+}
+
+Int_t xjjroot::dfitter::drawfitpaper(TString collisionsyst/*=""*/, const std::vector<TString> &vtex/*=std::vector<TString>()*/)
+{
+  gStyle->SetLineWidth(2);
+  std::vector<TString> vtexdraw = vtex;
+  if(!fparamfuns || !fsethist) { std::cout<<"error: hist_h or funs are not set up properly."<<std::endl; return 1; }
+  
+  TH1* hist_h_clone = (TH1*)hist_h->Clone(Form("hist_h_%d",std::time(nullptr)));
+  sethemptystyle(hist_h_clone, 1.00, 1.30, 0.06, 0.06, 0.045, 0.045);
+  hist_h_clone->GetXaxis()->SetLabelOffset(0.013);
+  hist_h_clone->SetMarkerSize(1.15);
+  hist_h_clone->SetMarkerStyle(20);
+  hist_h_clone->SetLineColor(1);
+  hist_h_clone->SetLineWidth(4);
+  hist_h_clone->GetXaxis()->SetNdivisions(-50205);
+  hist_h_clone->GetXaxis()->SetTickLength(0.04);  
+  hist_h_clone->Draw("e");  
+  TF1* fun_clone_f = clonefun(fun_f, Form("fun_f_%d",std::time(nullptr)));
+  fun_clone_f->SetNpx(5000);
+  fun_clone_f->SetLineWidth(5);
+  TF1* fun_clone_mass = clonefun(fun_mass, Form("fun_mass_%d",std::time(nullptr)));
+  fun_clone_mass->SetFillStyle(3002);
+  fun_clone_mass->SetLineWidth(6);
+  fun_clone_mass->SetLineStyle(7);
+  TF1* fun_clone_swap = clonefun(fun_swap, Form("fun_swap_%d",std::time(nullptr)));
+  fun_clone_swap->SetLineStyle(1);
+  fun_clone_swap->SetFillStyle(3005);
+  fun_clone_swap->SetLineWidth(6);
+  TF1* fun_clone_background = clonefun(fun_background, Form("fun_background_%d",std::time(nullptr)));
+  fun_clone_background->SetLineStyle(7);
+  fun_clone_background->SetLineWidth(6);
+
+  fun_clone_background->Draw("same");
+  fun_clone_mass->Draw("same");
+  fun_clone_swap->Draw("same");
+  fun_clone_f->Draw("same");
+
+  TLegend* leg_paper = new TLegend(0.64, 0.63, 0.96, 0.90, NULL, "brNDC");
+  setleg(leg_paper, 0.042);
+  leg_paper->AddEntry(hist_h_clone,"Data","pl");
+  leg_paper->AddEntry(fun_clone_f,"Fit","l");
+  leg_paper->AddEntry(fun_clone_mass,"Signal","f");
+  leg_paper->AddEntry(fun_clone_background,"Combinatorial","l");
+  leg_paper->AddEntry(fun_clone_swap,"K-#pi swapped","f");
+  leg_paper->Draw("same");
+  drawtex(0.96, 0.936, collisionsyst, 0.038, 31);
+  drawtex(0.22, 0.85, "CMS", 0.062, 11, 62);
+  // drawtex(0.22, 0.837, "Supplementary", 0.042, 13, 52);
+  // drawtex(0.22, 0.837, "Preliminary", 0.042, 13, 52);
+  // Float_t texxpos = 0.228, texypos = 0.81, texdypos = 0.057; // with Preliminary
+  Float_t texxpos = 0.228, texypos = 0.81+0.053, texdypos = 0.057;
+  if(!vtexdraw.empty())
+    {
+      texypos+=texlinespc;
+      int linespacflag = 0;
+      TString trrange = "";
+      if(vtexdraw.back().Contains("r")) { trrange = vtexdraw.back(); vtexdraw.pop_back(); }
+      for(std::vector<TString>::const_iterator it=vtexdraw.begin(); it!=vtexdraw.end(); it++) 
+        {
+          // if((*it).Contains("_") && (*it).Contains("^")) std::cout<<(*it)<<std::endl;
+          Float_t temp_texlinespc = texlinespc;
+          if(linespacflag==1) temp_texlinespc = temp_texlinespc+0.01;
+          if(linespacflag==2) temp_texlinespc = temp_texlinespc-0.01;
+          if(((*it).Contains("_") && (*it).Contains("^") && (*it).Contains("jet")) || linespacflag==1) linespacflag++;
+          drawtex(texxpos, texypos=(texypos-texdypos-temp_texlinespc), *it, 0.041);
+        }
+      drawtex(0.94, 0.58, trrange, 0.041, 31);
+      // if(!trrange.empty()) vtexdraw.push_back(trrange);
     }
   return 0;
 }
@@ -679,14 +753,23 @@ void xjjroot::dfitter::drawCMS(TString collision, TString snn/*="5.02"*/) const
   texCol->Draw();
 }
 
-void xjjroot::dfitter::drawtex(Double_t x, Double_t y, const char* text, Float_t tsize/*=0.04*/, Short_t align/*=12*/) const
+void xjjroot::dfitter::drawtex(Double_t x, Double_t y, const char* text, Float_t tsize/*=0.04*/, Short_t align/*=12*/, Style_t font/*=42*/) const
 {
   TLatex* tex = new TLatex(x, y, text);
   tex->SetNDC();
   tex->SetTextFont(42);
   tex->SetTextAlign(align);
   tex->SetTextSize(tsize);
+  tex->SetTextFont(font);
   tex->Draw();
+}
+
+void xjjroot::dfitter::setleg(TLegend* leg, Float_t size/*=0.04*/) const
+{
+  leg->SetBorderSize(0);
+  leg->SetFillStyle(0);
+  leg->SetTextFont(42);
+  leg->SetTextSize(size);
 }
 
 void xjjroot::dfitter::drawline(Double_t x1, Double_t y1, Double_t x2, Double_t y2, Color_t lcolor/*=kBlack*/, Style_t lstyle/*=1*/, Width_t lwidth/*=2*/) const
@@ -711,5 +794,24 @@ void xjjroot::dfitter::setgstyle() const
   gStyle->SetPadBottomMargin(0.145);
   gStyle->SetTitleX(.0f);
 }
+
+template <class T>
+void xjjroot::dfitter::sethemptystyle(T* hempty, Float_t xtitleoffset/*=-1*/, Float_t ytitleoffset/*=-1*/, Float_t xtitlesize/*=-1*/, Float_t ytitlesize/*=-1*/, Float_t xlabelsize/*=-1*/, Float_t ylabelsize/*=-1*/) const
+{
+  hempty->GetXaxis()->CenterTitle();
+  hempty->GetYaxis()->CenterTitle();
+  hempty->GetXaxis()->SetTitleFont(42);
+  hempty->GetYaxis()->SetTitleFont(42);
+  if(xtitleoffset>=0) hempty->GetXaxis()->SetTitleOffset(xtitleoffset);
+  if(ytitleoffset>=0) hempty->GetYaxis()->SetTitleOffset(ytitleoffset);
+  if(xtitlesize>=0) hempty->GetXaxis()->SetTitleSize(xtitlesize);
+  if(ytitlesize>=0) hempty->GetYaxis()->SetTitleSize(ytitlesize);
+  hempty->GetXaxis()->SetLabelFont(42);
+  hempty->GetYaxis()->SetLabelFont(42);
+  if(xlabelsize>=0) hempty->GetXaxis()->SetLabelSize(xlabelsize);
+  if(ylabelsize>=0) hempty->GetYaxis()->SetLabelSize(ylabelsize);
+  hempty->SetStats(0);
+}
+
 
 #endif

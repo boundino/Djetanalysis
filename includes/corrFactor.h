@@ -7,35 +7,25 @@
 
 std::vector<std::vector<Float_t>> corrFactor60999_pp = {{1.12726, 1.01301, 0.939069, 0.936218},
                                                         {1.04431, 0.856598, 0.698588, 0.693275}};
-std::vector<std::vector<Float_t>> corrFactor60999_PbPb = {{1.06178, 0.968375, 0.992791, 1.01106},
-                                                          {1.0625, 0.821727, 0.698714, 0.685159}};
-// std::vector<std::vector<Float_t>> corrFactor60999_pp = {{1.13193, 1.00881, 0.939681, 0.929455},
-//                                                         {1.04338, 0.859659, 0.701563, 0.697884}};
-// std::vector<std::vector<Float_t>> corrFactor60999_PbPb = {{1.06594, 0.969972, 0.990157, 1.00108},
-//                                                           {1.06102, 0.822581, 0.714466, 0.689699}};
-
-std::vector<std::vector<Float_t>> corrFactor6080_pp = {{1.09409, 0.881977, 0.74707, 0.73354}};
-std::vector<std::vector<Float_t>> corrFactor80100_pp = {{1.10486, 0.859414, 0.78515, 0.788794}};
-std::vector<std::vector<Float_t>> corrFactor100999_pp = {{1.10374, 0.867128, 0.825832, 0.847114}};
-std::vector<std::vector<Float_t>> corrFactor6080_PbPb = {{1.09312, 0.865577, 0.741024, 0.699058}};
-std::vector<std::vector<Float_t>> corrFactor80100_PbPb = {{1.10628, 0.804735, 0.666163, 0.712058}};
-std::vector<std::vector<Float_t>> corrFactor100999_PbPb = {{1.14406, 0.679655, 0.637097, 0.706196}};
-
-
 std::vector<std::vector<Float_t>> corrFactorSg60999_pp = {{1.09225, 1.00545, 0.962837, 0.950475},
                                                           {1.00769, 0.983958, 0.929715, 0.946028}};
+std::vector<std::vector<Float_t>> corrFactor60999_PbPb = {{1.06178, 0.968375, 0.992791, 1.01106},
+                                                          {1.0625, 0.821727, 0.698714, 0.685159}};
 std::vector<std::vector<Float_t>> corrFactorSg60999_PbPb = {{1.08077, 1.0529, 0.941354, 0.891346},
                                                             {0.881896, 1.91261, 1.17996, 0.974245}};
-// std::vector<std::vector<Float_t>> corrFactorSg60999_pp = {{1.08766, 1.00952, 0.962299, 0.957533},
-//                                                           {1.00854, 0.980418, 0.926552, 0.944118}};
-// std::vector<std::vector<Float_t>> corrFactorSg60999_PbPb = {{1.07627, 1.05095, 0.944057, 0.900284},
-//                                                             {0.8831, 1.91064, 1.15496, 0.977316}};
-std::vector<std::vector<Float_t>> corrFactorSg6080_pp = {{1.00492, 1.00089, 0.979408, 0.995188}};
-std::vector<std::vector<Float_t>> corrFactorSg80100_pp = {{1.0017, 1.00679, 0.987734, 0.967546}};
-std::vector<std::vector<Float_t>> corrFactorSg100999_pp = {{1.00052, 1.01378, 0.986423, 0.987912}};
-std::vector<std::vector<Float_t>> corrFactorSg6080_PbPb = {{0.846146, 1.77416, 1.18841, 1.10423}};
-std::vector<std::vector<Float_t>> corrFactorSg80100_PbPb = {{0.89093, 1.62917, 1.08892, 1.03921}};
-std::vector<std::vector<Float_t>> corrFactorSg100999_PbPb = {{0.923006, 1.38538, 1.06056, 1.02257}};
+
+std::vector<std::vector<Float_t>> corrFactor6080_pp = {{1.09689, 0.880167, 0.741043, 0.739134}};
+std::vector<std::vector<Float_t>> corrFactorSg6080_pp = {{1.00244, 1.00302, 0.986969, 0.986772}};
+std::vector<std::vector<Float_t>> corrFactor80100_pp = {{1.09993, 0.860205, 0.796501, 0.78924}};
+std::vector<std::vector<Float_t>> corrFactorSg80100_pp = {{1.00622, 1.00591, 0.973502, 0.966424}};
+std::vector<std::vector<Float_t>> corrFactor100999_pp = {{1.10337, 0.870652, 0.823609, 0.842393}};
+std::vector<std::vector<Float_t>> corrFactorSg100999_pp = {{1.00088, 1.00968, 0.989034, 0.993169}};
+std::vector<std::vector<Float_t>> corrFactor6080_PbPb = {{1.09674, 0.863445, 0.730943, 0.702737}};
+std::vector<std::vector<Float_t>> corrFactorSg6080_PbPb = {{0.843418, 1.77854, 1.20402, 1.09631}};
+std::vector<std::vector<Float_t>> corrFactor80100_PbPb = {{1.10717, 0.803746, 0.664185, 0.703006}};
+std::vector<std::vector<Float_t>> corrFactorSg80100_PbPb = {{0.890246, 1.63129, 1.09176, 1.0509}};
+std::vector<std::vector<Float_t>> corrFactor100999_PbPb = {{1.14457, 0.67986, 0.635053, 0.705076}};
+std::vector<std::vector<Float_t>> corrFactorSg100999_PbPb = {{0.922639, 1.385, 1.06361, 1.02305}};
 
 // ! jet eta 0.3-1.6
 // std::vector<std::vector<Float_t>> corrFactor60999_pp = {{1.15332, 1.00313, 0.944529, 0.913613},

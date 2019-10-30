@@ -104,7 +104,7 @@ void djtana_plothist(TString inputhistname, TString outputname,
       pPull->SetMargin(xjjroot::margin_pad_left, xjjroot::margin_pad_right, 0.07*1/yPullpaddiv, 0);
       pPull->Draw();
       pPull->cd();
-      TH2F* hemptyPull = new TH2F("hemptyPull", ";r;bkg sub / signal", 5, drBins[0], drBins[nDrBins], 10, 0.8, 1.2);
+      TH2F* hemptyPull = new TH2F("hemptyPull", ";r;bkg sub / signal", 5, drBins[0], drBins[nDrBins], 10, 0.85, 1.15);
       hemptyPull->GetXaxis()->SetNdivisions(505);
       hemptyPull->GetYaxis()->SetNdivisions(505);
       xjjroot::sethempty(hemptyPull, -0.5, -0);
