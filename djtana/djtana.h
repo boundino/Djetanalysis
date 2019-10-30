@@ -40,7 +40,7 @@ Color_t fmcolor[3] = {kAzure+3, kRed+3, kGreen+3};
 Style_t fmstyle[3] = {20, 21, 34};
 // Color_t ffcolor[3] = {kAzure-4, kRed-9};
 Color_t ffcolor[3] = {kAzure-8, kRed-9, kGreen-8};
-TString fleg[3] = {"pp", "PbPb", "PYTHIA8"};
+TString fleg[3] = {"pp", "PbPb", "PYTHIA"};
 
 TH1F* hNjets;
 
@@ -107,6 +107,9 @@ TGraphErrors* agSignalRsubPYTHIA[nPtBins];
 TGraphErrors* agSignalRsubRatioPYTHIA[nPtBins];
 TGraphErrors* agSignalRsubRatioPYTHIAMe[nPtBins];
 TGraphErrors* agSignalRsubRatioPYTHIAPP[nPtBins];
+TH1F* ahSignalRsubRatioSHERPAPP[nPtBins];
+TGraphErrors* agSignalRsubRatioSHERPAPP[nPtBins];
+
 
 //
 int createhists(Option_t* option)
