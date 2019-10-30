@@ -1,4 +1,5 @@
 #include "djtana.h"
+#include "djtana_finalplot.h"
 #include "../../theory/theory.h"
 
 Float_t ypaddivP = 1.2/2, yPullpaddivP = 0.6*0.8/4, yShpaddivP = 0.6*0.8/4, yPypaddivP = 0.8*0.8/4;
@@ -28,7 +29,7 @@ void djtana_finalplot(TString inputnamePP, TString inputnamePbPb, TString inputn
   if(!infhistRatio->IsOpen()) return;
   if(gethists(infhistRatio, "plotratio")) return;
 
-  // TFile* infhistPYTHIA;
+  // prepare pythia and sherpa
   djt::theoryCCNU* tccnu = new djt::theoryCCNU("../../theory/1906.01499_data_0619.dat");
   if(plotPYTHIA)
     {
@@ -45,73 +46,11 @@ void djtana_finalplot(TString inputnamePP, TString inputnamePbPb, TString inputn
         }
     }
 
+  // prepare th1 and systematics
   if(djtsyst::initsyst(jetptmin, jetptmax)) return;
-  std::vector<TString> tname = {"", "_Me"};
-  std::vector<TH1F**> hSignalXsubP = {(TH1F**)ahSignalRsubP, (TH1F**)ahSignalRsubMeP};
-  std::vector<TH1F**> hSignalXsubRatio = {(TH1F**)ahSignalRsubRatio, (TH1F**)ahSignalRsubRatioMe};
-  std::vector<TH1F**> hSignalXsubRatioPYTHIA = {(TH1F**)ahSignalRsubRatioPYTHIA, (TH1F**)ahSignalRsubRatioPYTHIAMe};
-  std::vector<TGraphErrors**> gSignalXsubP = {(TGraphErrors**)agSignalRsubP, (TGraphErrors**)agSignalRsubMeP};
-  std::vector<TGraphErrors**> gSignalXsubRatio = {(TGraphErrors**)agSignalRsubRatio, (TGraphErrors**)agSignalRsubRatioMe};
-  std::vector<TGraphErrors**> gSignalXsubRatioPYTHIA = {(TGraphErrors**)agSignalRsubRatioPYTHIA, (TGraphErrors**)agSignalRsubRatioPYTHIAMe};
-  // std::cout<<ahSignalRsubRatioMe[0]<<" "<<(hSignalXsubRatio.at(1))[0]<<std::endl;
+  finalplot::preparehist(plotPYTHIA);
 
-  for(int i=0;i<nPtBins;i++)
-    {
-      Float_t ax[nDrBins], aex[nDrBins], ayPYTHIA[nDrBins], aeyPYTHIA[nDrBins];
-      for(int j=0;j<nDrBins;j++)
-        {
-          ax[j] = (drBins[j+1]+drBins[j]) / 2.;
-          aex[j] = (drBins[j+1]-drBins[j]) / 2.;
-          if(plotPYTHIA)
-            {
-              ayPYTHIA[j] = ahSignalRsubPYTHIA[i]->GetBinContent(j+1);
-              aeyPYTHIA[j] = ahSignalRsubPYTHIA[i]->GetBinError(j+1);
-            }
-        }
-      agSignalRsubPYTHIA[i] = new TGraphErrors(nDrBins, ax, ayPYTHIA, aex, aeyPYTHIA);
-      agSignalRsubPYTHIA[i]->SetName(Form("agSignalRsubPYTHIA_%d",i));
-      for(int l=0;l<2;l++)
-        {
-          if((hSignalXsubP.at(l))[1*nPtBins+i]->GetBinContent(nDrBins)<=0 || !l)
-            {
-              (hSignalXsubP.at(l))[1*nPtBins+i]->SetBinContent(nDrBins, 1.e-10);
-              (hSignalXsubRatio.at(l))[i]->SetBinContent(nDrBins, -10);
-            }
-          Float_t ayPP[nDrBins], ayPbPb[nDrBins], ayRatio[nDrBins], ayRatioPYTHIA[nDrBins], ayPPPYTHIA[nDrBins], aeyPP[nDrBins], aeyPbPb[nDrBins], aeyRatio[nDrBins], aeyRatioPYTHIA[nDrBins], aeyPPPYTHIA[nDrBins];
-          for(int j=0;j<nDrBins;j++)
-            {
-              ax[j] = (drBins[j+1]+drBins[j]) / 2.;
-              aex[j] = (drBins[j+1]-drBins[j]) / 2.;
-              ayPP[j] = (hSignalXsubP.at(l))[0*nPtBins+i]->GetBinContent(j+1);
-              aeyPP[j] = ayPP[j] * djtsyst::getsyst(i, j, "pp");
-              ayPbPb[j] = (hSignalXsubP.at(l))[1*nPtBins+i]->GetBinContent(j+1);
-              aeyPbPb[j] = ayPbPb[j] * djtsyst::getsyst(i, j, "PbPb");
-              ayRatio[j] = (hSignalXsubRatio.at(l))[i]->GetBinContent(j+1);
-              aeyRatio[j] = ayRatio[j] * djtsyst::getsyst(i, j, "ratio");
-              if(plotPYTHIA)
-                {
-                  ayRatioPYTHIA[j] = (hSignalXsubRatioPYTHIA.at(l))[i]->GetBinContent(j+1);
-                  aeyRatioPYTHIA[j] = ayRatioPYTHIA[j] * djtsyst::getsyst(i, j, "PbPb");
-                  ayPPPYTHIA[j] = ahSignalRsubRatioPYTHIAPP[i]->GetBinContent(j+1);
-                  aeyPPPYTHIA[j] = ayPPPYTHIA[j] * djtsyst::getsyst(i, j, "pp");
-                }
-            }
-          (gSignalXsubP.at(l))[0*nPtBins+i] = new TGraphErrors(nDrBins, ax, ayPP, aex, aeyPP);
-          (gSignalXsubP.at(l))[0*nPtBins+i]->SetName(Form("agSignalRsubPP_%d%s",i,tname[l].Data()));
-          (gSignalXsubP.at(l))[1*nPtBins+i] = new TGraphErrors(nDrBins, ax, ayPbPb, aex, aeyPbPb);
-          (gSignalXsubP.at(l))[1*nPtBins+i]->SetName(Form("agSignalRsubPbPb_%d%s",i,tname[l].Data()));
-          (gSignalXsubRatio.at(l))[i] = new TGraphErrors(nDrBins, ax, ayRatio, aex, aeyRatio);
-          (gSignalXsubRatio.at(l))[i]->SetName(Form("agSignalRsubRatio_%d%s",i,tname[l].Data()));
-          if(plotPYTHIA)
-            {
-              (gSignalXsubRatioPYTHIA.at(l))[i] = new TGraphErrors(nDrBins, ax, ayRatioPYTHIA, aex, aeyRatioPYTHIA);
-              (gSignalXsubRatioPYTHIA.at(l))[i]->SetName(Form("agSignalRsubRatioPYTHIA_%d%s",i,tname[l].Data()));
-              agSignalRsubRatioPYTHIAPP[i] = new TGraphErrors(nDrBins, ax, ayPPPYTHIA, aex, aeyPPPYTHIA);
-              agSignalRsubRatioPYTHIAPP[i]->SetName(Form("ahSignalRsubRatioPYTHIAPP_%d%s",i,tname[l].Data()));
-            }
-        }
-    }
-  //
+  // set up ploting style
   for(int i=0;i<nPtBins;i++)
     {
       for(int l=0;l<2;l++)
@@ -137,7 +76,7 @@ void djtana_finalplot(TString inputnamePP, TString inputnamePbPb, TString inputn
         }
     }
 
-  //
+  // prepare legends
   TString texjetpt = jetptmax<999?Form("%s < |p_{T}^{jet}| < %s GeV/c",xjjc::number_remove_zero(jetptmin).c_str(),xjjc::number_remove_zero(jetptmax).c_str()):Form("|p_{T}^{jet}| > %s GeV/c",xjjc::number_remove_zero(jetptmin).c_str());
   std::vector<TString> vectex =
     {
@@ -146,158 +85,6 @@ void djtana_finalplot(TString inputnamePP, TString inputnamePbPb, TString inputn
       jetetamin<=0?Form("|#eta^{jet}| < %s",xjjc::number_remove_zero(jetetamax).c_str()):Form("%s < |#eta^{jet}| < %s",xjjc::number_remove_zero(jetetamin).c_str(),xjjc::number_remove_zero(jetetamax).c_str()),
     };
   Float_t yaxismin, yaxismax;
-
-  for(int l=0;l<2;l++)
-    {
-      for(int i=0;i<nPtBins;i++)
-        {
-          set_yaxisrange(yaxismin, yaxismax, i);
-          TH2F* hempty = new TH2F("hempty", ";r;#frac{1}{N_{JD}} #frac{dN_{JD}}{dr}", 5, drBins[0], drBins[nDrBins], 10, yaxismin, yaxismax);
-          TH2F* hemptyPull = new TH2F("hemptyPull", ";r;#frac{PbPb}{pp}", 5, drBins[0], drBins[nDrBins], 10, 0, 3.2);
-          setup_hempty(hempty, hemptyPull);
-          TString texpt = ptBins[i+1]>900?Form("p_{T}^{D} > %s GeV/c",xjjc::number_remove_zero(ptBins[i]).c_str()):Form("%s < p_{T}^{D} < %s GeV/c",xjjc::number_remove_zero(ptBins[i]).c_str(),xjjc::number_remove_zero(ptBins[i+1]).c_str());
-          vectex.insert(vectex.begin(),texpt);
-
-          TCanvas* c = new TCanvas("c", "", 600, 800);
-          TPad* pXsec = new TPad("pXsec", "", 0, 1-ypaddiv, 1, 1);
-          pXsec->SetMargin(xjjroot::margin_pad_left, xjjroot::margin_pad_right, 0, xjjroot::margin_pad_top);
-          pXsec->Draw();
-          pXsec->cd();
-          pXsec->SetLogy();
-          hempty->Draw();
-          TLegend* leg = new TLegend(0.24, 0.30-2*0.06, 0.70, 0.30);
-          xjjroot::setleg(leg);
-
-          (gSignalXsubP.at(l))[1*nPtBins+i]->Draw("2 same");
-          (hSignalXsubP.at(l))[1*nPtBins+i]->Draw("pe same");
-          leg->AddEntry((gSignalXsubP.at(l))[1*nPtBins+i], fleg[1], "pf");
-          (gSignalXsubP.at(l))[0*nPtBins+i]->Draw("2 same");
-          (hSignalXsubP.at(l))[0*nPtBins+i]->Draw("pe same");
-          leg->AddEntry((gSignalXsubP.at(l))[0*nPtBins+i], fleg[0], "pf");
-
-          // xjjroot::drawCMS("");
-          xjjroot::drawtex(0.22, 0.86, "CMS", 0.075, 13, 62);
-          xjjroot::drawtex(0.96, 0.915, "27.4 pb^{-1} (5.02 TeV pp) + 404 #mub^{-1} (5.02 TeV PbPb)", 0.042, 31);
-          Float_t texxpos = 0.60, texypos = 0.84, texdypos = 0.06;
-          texypos += texdypos;
-          for(std::vector<TString>::const_iterator it=vectex.begin(); it!=vectex.end(); it++)
-            xjjroot::drawtex(texxpos, texypos=(texypos-texdypos), *it);
-          leg->Draw();
-
-          c->cd();
-          TPad* pPull = new TPad("pPull", "", 0, 0, 1, yPullpaddiv);
-          pPull->SetMargin(xjjroot::margin_pad_left, xjjroot::margin_pad_right, 0.07*1/yPullpaddiv, 0);
-          pPull->Draw();
-          pPull->cd();
-          hemptyPull->Draw();
-
-          xjjroot::drawline(drBins[0], 1, drBins[nDrBins], 1, kBlack, 1, 2);
-          (gSignalXsubRatio.at(l))[i]->Draw("2 same");
-          (hSignalXsubRatio.at(l))[i]->Draw("pe same");
-
-          if(l || jetetamin>=0.3)c->SaveAs(Form("plotfinal/cfinal_xsec_%s_r_pt_%s_%s%s.pdf",outputname.Data(),xjjc::number_to_string(ptBins[i]).c_str(),xjjc::number_to_string(ptBins[i+1]).c_str(),tname[l].Data()));
-          xjjroot::drawtex(0.22, 0.86-0.07, "Preliminary", 0.060, 13, 52);
-          if(l || jetetamin>=0.3)c->SaveAs(Form("plotfinal/cfinal_xsec_%s_r_pt_%s_%s%s_pre.pdf",outputname.Data(),xjjc::number_to_string(ptBins[i]).c_str(),xjjc::number_to_string(ptBins[i+1]).c_str(),tname[l].Data()));
-          delete leg;
-          delete hemptyPull;
-          delete hempty;
-          delete pPull;
-          delete pXsec;
-          delete c;
-
-          vectex.erase(vectex.begin());
-        }
-    }
-
-  for(int i=0;i<nPtBins;i++)
-    {
-      set_yaxisrange(yaxismin, yaxismax, i);
-      TH2F* hempty = new TH2F("hempty", ";r;#frac{1}{N_{JD}} #frac{dN_{JD}}{dr}", 5, drBins[0], drBins[nDrBins], 10, yaxismin, yaxismax);
-      TH2F* hemptyPull = new TH2F("hemptyPull", ";r;#frac{PbPb}{pp}", 5, drBins[0], drBins[nDrBins], 10, 0, 3.2);
-      setup_hempty(hempty, hemptyPull);
-
-      TString texpt = ptBins[i+1]>900?Form("p_{T}^{D} > %s GeV/c",xjjc::number_remove_zero(ptBins[i]).c_str()):Form("%s < p_{T}^{D} < %s GeV/c",xjjc::number_remove_zero(ptBins[i]).c_str(),xjjc::number_remove_zero(ptBins[i+1]).c_str());
-      vectex.insert(vectex.begin(),texpt);
-
-      TCanvas* c = new TCanvas("c", "", 600, 800);
-      TPad* pXsec = new TPad("pXsec", "", 0, 1-ypaddiv, 1, 1);
-      pXsec->SetMargin(xjjroot::margin_pad_left, xjjroot::margin_pad_right, 0, xjjroot::margin_pad_top);
-      pXsec->Draw();
-      pXsec->cd();
-      pXsec->SetLogy();
-      hempty->Draw();
-      // TLegend* leg = new TLegend(0.65, 0.85-(2+2*int(jetetamin>=0.3)+plotPYTHIA)*0.06, 1.1, 0.85);
-      // xjjroot::setleg(leg);
-      TLegend* leg = new TLegend(0.24, 0.30-(2+2*int(jetetamin>=0.3)+plotPYTHIA)*0.06, 0.70, 0.30);
-      xjjroot::setleg(leg);
-
-      (gSignalXsubP.at(1))[1*nPtBins+i]->Draw("2 same");
-      (hSignalXsubP.at(1))[1*nPtBins+i]->Draw("pe same");
-      leg->AddEntry((gSignalXsubP.at(1))[1*nPtBins+i], fleg[1], "pf");
-
-      (gSignalXsubP.at(1))[0*nPtBins+i]->Draw("2 same");
-      (hSignalXsubP.at(1))[0*nPtBins+i]->Draw("pe same");
-      leg->AddEntry((gSignalXsubP.at(1))[0*nPtBins+i], fleg[0], "pf");
-
-      if(jetetamin>=0.3)
-        {
-          (hSignalXsubP.at(0))[1*nPtBins+i]->Draw("pe same");
-          leg->AddEntry((hSignalXsubP.at(0))[1*nPtBins+i], Form("%s #eta-ref", fleg[1].Data()), "p");
-          (hSignalXsubP.at(0))[0*nPtBins+i]->Draw("pe same");
-          leg->AddEntry((hSignalXsubP.at(0))[0*nPtBins+i], Form("%s #eta-ref", fleg[0].Data()), "p");
-        }
-      if(plotPYTHIA)
-        {
-          agSignalRsubPYTHIA[i]->Draw("2 same");
-          ahSignalRsubPYTHIA[i]->Draw("pe same");
-          leg->AddEntry(agSignalRsubPYTHIA[i], fleg[2], "p");
-        }
-
-      xjjroot::drawtex(0.22, 0.86, "CMS", 0.075, 13, 62);
-      // xjjroot::drawtex(0.22, 0.86-0.07, "Preliminary", 0.060, 13, 52);
-      xjjroot::drawtex(0.96, 0.915, "27.4 pb^{-1} (5.02 TeV pp) + 404 #mub^{-1} (5.02 TeV PbPb)", 0.042, 31);
-      Float_t texxpos = 0.60, texypos = 0.84, texdypos = 0.06;
-      texypos += texdypos;
-      for(std::vector<TString>::const_iterator it=vectex.begin(); it!=vectex.end(); it++)
-        xjjroot::drawtex(texxpos, texypos=(texypos-texdypos), *it);
-      leg->Draw();
-
-      c->cd();
-      TPad* pPull = new TPad("pPull", "", 0, 0, 1, yPullpaddiv);
-      pPull->SetMargin(xjjroot::margin_pad_left, xjjroot::margin_pad_right, 0.07*1/yPullpaddiv, 0);
-      pPull->Draw();
-      pPull->cd();
-      hemptyPull->Draw();
-
-      xjjroot::drawline(drBins[0], 1, drBins[nDrBins], 1, kBlack, 1, 2);
-      (gSignalXsubRatio.at(1))[i]->Draw("2 same");
-      (hSignalXsubRatio.at(1))[i]->Draw("pe same");
-      if(jetetamin >= 0.3)
-        {
-          (hSignalXsubRatio.at(0))[i]->Draw("pe same");
-        }
-      if(plotPYTHIA)
-        {
-          // (gSignalXsubRatioPYTHIA.at(1))[i]->Draw("2 same");
-          // (hSignalXsubRatioPYTHIA.at(1))[i]->Draw("pe same");
-        }
-      TLegend* legPull = new TLegend(0.21, 0.95-(1+int(jetetamin>=0.3)+plotPYTHIA)*0.09, 0.55, 0.95);
-      xjjroot::setleg(legPull, 0.09);
-      legPull->AddEntry((hSignalXsubRatio.at(1))[i], "event-mixing", "p");
-      legPull->AddEntry((hSignalXsubRatioPYTHIA.at(1))[i], "PbPb / PYTHIA", "p");
-      if(jetetamin >= 0.3) legPull->AddEntry((hSignalXsubRatio.at(0))[i], "#eta-ref", "p");
-      if(jetetamin >= 0.3) legPull->Draw();
-      c->SaveAs(Form("plotfinal/cfinal_xsec_%s_r_pt_%s_%s_comp.pdf",outputname.Data(),xjjc::number_to_string(ptBins[i]).c_str(),xjjc::number_to_string(ptBins[i+1]).c_str()));
-
-      delete legPull;
-      delete hemptyPull;
-      delete hempty;
-      delete pPull;
-      delete pXsec;
-      delete c;
-
-      vectex.erase(vectex.begin());
-    }
 
   //-------------------------------------------- Publish plots -------------------------------------------- //
 
@@ -382,14 +169,15 @@ void djtana_finalplot(TString inputnamePP, TString inputnamePbPb, TString inputn
           agSignalRsubRatioPYTHIAPP[i]->Draw("2 same");
           ahSignalRsubRatioPYTHIAPP[i]->Draw("pe same");
 
-          if(l && jetetamin<0.3)c->SaveAs(Form("plotfinal/cfinal_xsec_%s_r_pt_%s_%s%s_pythia.pdf",outputname.Data(),xjjc::number_to_string(ptBins[i]).c_str(),xjjc::number_to_string(ptBins[i+1]).c_str(),tname[l].Data()));
-          if(l && jetetamin<0.3)c->SaveAs(Form("plotfinal/cfinal_xsec_%s_r_pt_%s_%s%s_pythia.C",outputname.Data(),xjjc::number_to_string(ptBins[i]).c_str(),xjjc::number_to_string(ptBins[i+1]).c_str(),tname[l].Data()));
+          if(l && jetetamin<0.3) c->SaveAs(Form("plotfinal/cfinal_xsec_%s_r_pt_%s_%s%s_pythia.pdf",outputname.Data(),xjjc::number_to_string(ptBins[i]).c_str(),xjjc::number_to_string(ptBins[i+1]).c_str(),tname[l].Data()));
+          // if(l && jetetamin<0.3) c->SaveAs(Form("plotfinal/cfinal_xsec_%s_r_pt_%s_%s%s_pythia.C",outputname.Data(),xjjc::number_to_string(ptBins[i]).c_str(),xjjc::number_to_string(ptBins[i+1]).c_str(),tname[l].Data()));
           pXsec->cd();
           xjjroot::drawtex(0.35, 0.81, "Preliminary", 0.054, 11, 52);
-          if(l && jetetamin<0.3)c->SaveAs(Form("plotfinal/cfinal_xsec_%s_r_pt_%s_%s%s_pythia_pre.pdf",outputname.Data(),xjjc::number_to_string(ptBins[i]).c_str(),xjjc::number_to_string(ptBins[i+1]).c_str(),tname[l].Data()));
+          if(l && jetetamin<0.3) c->SaveAs(Form("plotfinal/cfinal_xsec_%s_r_pt_%s_%s%s_pythia_pre.pdf",outputname.Data(),xjjc::number_to_string(ptBins[i]).c_str(),xjjc::number_to_string(ptBins[i+1]).c_str(),tname[l].Data()));
 
           delete leg;
           delete hemptyPy;
+          delete hemptySh;
           delete hemptyPull;
           delete hempty;
           delete pPy;
@@ -530,7 +318,6 @@ void djtana_finalplot(TString inputnamePP, TString inputnamePbPb, TString inputn
 
           if(jetetamin<0.3) cdNdrratio->SaveAs(Form("plotfinal/cfinal_xsec_%s_r_pt_%s_%s%s_dNdrratio.pdf",outputname.Data(),xjjc::number_to_string(ptBins[i]).c_str(),xjjc::number_to_string(ptBins[i+1]).c_str(),tname[l].Data()));
 
-
           // dNdr + pp/pythia
           TCanvas* cdNdrpythia = new TCanvas("cdNdrpythia", "", 600, 700);
           cdNdrpythia->cd();
@@ -545,12 +332,9 @@ void djtana_finalplot(TString inputnamePP, TString inputnamePbPb, TString inputn
           (gSignalXsubP.at(l))[0*nPtBins+i]->Draw("2 same");
           (hSignalXsubP.at(l))[0*nPtBins+i]->Draw("pe same");
           legdNdrpythia->AddEntry((gSignalXsubP.at(l))[0*nPtBins+i], fleg[0], "pf");
-          if(plotPYTHIA)
-            {
-              agSignalRsubPYTHIA[i]->Draw("2 same");
-              ahSignalRsubPYTHIA[i]->Draw("pe same");
-              legdNdrpythia->AddEntry(agSignalRsubPYTHIA[i], fleg[2], "p");
-            }
+          agSignalRsubPYTHIA[i]->Draw("2 same");
+          ahSignalRsubPYTHIA[i]->Draw("pe same");
+          legdNdrpythia->AddEntry(agSignalRsubPYTHIA[i], fleg[2], "p");
           xjjroot::drawtex((i?0.62:0.65)+0.01, (i?0.42:0.06+0.05)-0.02+0.06, "CCNU", 0.050, 11);
           tccnu->draw(0, i, 0.050, (i?0.62:0.65), (i?0.42:0.06+0.05)-0.02);
           xjjroot::drawtex(0.22, 0.81, "CMS", 0.075, 11, 62);
@@ -571,6 +355,7 @@ void djtana_finalplot(TString inputnamePP, TString inputnamePbPb, TString inputn
           hemptyPy->Draw();
           xjjroot::drawline(drBins[0], 1, drBins[nDrBins], 1, kBlack, 1, 2);
           agSignalRsubRatioPYTHIAPP[i]->Draw("2 same");
+          tccnu->drawratiopp(i, ahSignalRsubMeP[0][i]);
           ahSignalRsubRatioPYTHIAPP[i]->Draw("pe same");
           gPad->RedrawAxis();
 
@@ -856,4 +641,156 @@ void verbose_binerror()
   std::cout<<"\e[0m"<<std::endl;
 
 }
+
+// for(int l=0;l<2;l++)
+//   {
+//     for(int i=0;i<nPtBins;i++)
+//       {
+//         set_yaxisrange(yaxismin, yaxismax, i);
+//         TH2F* hempty = new TH2F("hempty", ";r;#frac{1}{N_{JD}} #frac{dN_{JD}}{dr}", 5, drBins[0], drBins[nDrBins], 10, yaxismin, yaxismax);
+//         TH2F* hemptyPull = new TH2F("hemptyPull", ";r;#frac{PbPb}{pp}", 5, drBins[0], drBins[nDrBins], 10, 0, 3.2);
+//         setup_hempty(hempty, hemptyPull);
+//         TString texpt = ptBins[i+1]>900?Form("p_{T}^{D} > %s GeV/c",xjjc::number_remove_zero(ptBins[i]).c_str()):Form("%s < p_{T}^{D} < %s GeV/c",xjjc::number_remove_zero(ptBins[i]).c_str(),xjjc::number_remove_zero(ptBins[i+1]).c_str());
+//         vectex.insert(vectex.begin(),texpt);
+
+//         TCanvas* c = new TCanvas("c", "", 600, 800);
+//         TPad* pXsec = new TPad("pXsec", "", 0, 1-ypaddiv, 1, 1);
+//         pXsec->SetMargin(xjjroot::margin_pad_left, xjjroot::margin_pad_right, 0, xjjroot::margin_pad_top);
+//         pXsec->Draw();
+//         pXsec->cd();
+//         pXsec->SetLogy();
+//         hempty->Draw();
+//         TLegend* leg = new TLegend(0.24, 0.30-2*0.06, 0.70, 0.30);
+//         xjjroot::setleg(leg);
+
+//         (gSignalXsubP.at(l))[1*nPtBins+i]->Draw("2 same");
+//         (hSignalXsubP.at(l))[1*nPtBins+i]->Draw("pe same");
+//         leg->AddEntry((gSignalXsubP.at(l))[1*nPtBins+i], fleg[1], "pf");
+//         (gSignalXsubP.at(l))[0*nPtBins+i]->Draw("2 same");
+//         (hSignalXsubP.at(l))[0*nPtBins+i]->Draw("pe same");
+//         leg->AddEntry((gSignalXsubP.at(l))[0*nPtBins+i], fleg[0], "pf");
+
+//         // xjjroot::drawCMS("");
+//         xjjroot::drawtex(0.22, 0.86, "CMS", 0.075, 13, 62);
+//         xjjroot::drawtex(0.96, 0.915, "27.4 pb^{-1} (5.02 TeV pp) + 404 #mub^{-1} (5.02 TeV PbPb)", 0.042, 31);
+//         Float_t texxpos = 0.60, texypos = 0.84, texdypos = 0.06;
+//         texypos += texdypos;
+//         for(std::vector<TString>::const_iterator it=vectex.begin(); it!=vectex.end(); it++)
+//           xjjroot::drawtex(texxpos, texypos=(texypos-texdypos), *it);
+//         leg->Draw();
+
+//         c->cd();
+//         TPad* pPull = new TPad("pPull", "", 0, 0, 1, yPullpaddiv);
+//         pPull->SetMargin(xjjroot::margin_pad_left, xjjroot::margin_pad_right, 0.07*1/yPullpaddiv, 0);
+//         pPull->Draw();
+//         pPull->cd();
+//         hemptyPull->Draw();
+
+//         xjjroot::drawline(drBins[0], 1, drBins[nDrBins], 1, kBlack, 1, 2);
+//         (gSignalXsubRatio.at(l))[i]->Draw("2 same");
+//         (hSignalXsubRatio.at(l))[i]->Draw("pe same");
+
+//         if(l || jetetamin>=0.3)c->SaveAs(Form("plotfinal/cfinal_xsec_%s_r_pt_%s_%s%s.pdf",outputname.Data(),xjjc::number_to_string(ptBins[i]).c_str(),xjjc::number_to_string(ptBins[i+1]).c_str(),tname[l].Data()));
+//         xjjroot::drawtex(0.22, 0.86-0.07, "Preliminary", 0.060, 13, 52);
+//         if(l || jetetamin>=0.3)c->SaveAs(Form("plotfinal/cfinal_xsec_%s_r_pt_%s_%s%s_pre.pdf",outputname.Data(),xjjc::number_to_string(ptBins[i]).c_str(),xjjc::number_to_string(ptBins[i+1]).c_str(),tname[l].Data()));
+//         delete leg;
+//         delete hemptyPull;
+//         delete hempty;
+//         delete pPull;
+//         delete pXsec;
+//         delete c;
+
+//         vectex.erase(vectex.begin());
+//       }
+//   }
+
+// for(int i=0;i<nPtBins;i++)
+//   {
+//     set_yaxisrange(yaxismin, yaxismax, i);
+//     TH2F* hempty = new TH2F("hempty", ";r;#frac{1}{N_{JD}} #frac{dN_{JD}}{dr}", 5, drBins[0], drBins[nDrBins], 10, yaxismin, yaxismax);
+//     TH2F* hemptyPull = new TH2F("hemptyPull", ";r;#frac{PbPb}{pp}", 5, drBins[0], drBins[nDrBins], 10, 0, 3.2);
+//     setup_hempty(hempty, hemptyPull);
+
+//     TString texpt = ptBins[i+1]>900?Form("p_{T}^{D} > %s GeV/c",xjjc::number_remove_zero(ptBins[i]).c_str()):Form("%s < p_{T}^{D} < %s GeV/c",xjjc::number_remove_zero(ptBins[i]).c_str(),xjjc::number_remove_zero(ptBins[i+1]).c_str());
+//     vectex.insert(vectex.begin(),texpt);
+
+//     TCanvas* c = new TCanvas("c", "", 600, 800);
+//     TPad* pXsec = new TPad("pXsec", "", 0, 1-ypaddiv, 1, 1);
+//     pXsec->SetMargin(xjjroot::margin_pad_left, xjjroot::margin_pad_right, 0, xjjroot::margin_pad_top);
+//     pXsec->Draw();
+//     pXsec->cd();
+//     pXsec->SetLogy();
+//     hempty->Draw();
+//     // TLegend* leg = new TLegend(0.65, 0.85-(2+2*int(jetetamin>=0.3)+plotPYTHIA)*0.06, 1.1, 0.85);
+//     // xjjroot::setleg(leg);
+//     TLegend* leg = new TLegend(0.24, 0.30-(2+2*int(jetetamin>=0.3)+plotPYTHIA)*0.06, 0.70, 0.30);
+//     xjjroot::setleg(leg);
+
+//     (gSignalXsubP.at(1))[1*nPtBins+i]->Draw("2 same");
+//     (hSignalXsubP.at(1))[1*nPtBins+i]->Draw("pe same");
+//     leg->AddEntry((gSignalXsubP.at(1))[1*nPtBins+i], fleg[1], "pf");
+
+//     (gSignalXsubP.at(1))[0*nPtBins+i]->Draw("2 same");
+//     (hSignalXsubP.at(1))[0*nPtBins+i]->Draw("pe same");
+//     leg->AddEntry((gSignalXsubP.at(1))[0*nPtBins+i], fleg[0], "pf");
+
+//     if(jetetamin>=0.3)
+//       {
+//         (hSignalXsubP.at(0))[1*nPtBins+i]->Draw("pe same");
+//         leg->AddEntry((hSignalXsubP.at(0))[1*nPtBins+i], Form("%s #eta-ref", fleg[1].Data()), "p");
+//         (hSignalXsubP.at(0))[0*nPtBins+i]->Draw("pe same");
+//         leg->AddEntry((hSignalXsubP.at(0))[0*nPtBins+i], Form("%s #eta-ref", fleg[0].Data()), "p");
+//       }
+//     if(plotPYTHIA)
+//       {
+//         agSignalRsubPYTHIA[i]->Draw("2 same");
+//         ahSignalRsubPYTHIA[i]->Draw("pe same");
+//         leg->AddEntry(agSignalRsubPYTHIA[i], fleg[2], "p");
+//       }
+
+//     xjjroot::drawtex(0.22, 0.86, "CMS", 0.075, 13, 62);
+//     // xjjroot::drawtex(0.22, 0.86-0.07, "Preliminary", 0.060, 13, 52);
+//     xjjroot::drawtex(0.96, 0.915, "27.4 pb^{-1} (5.02 TeV pp) + 404 #mub^{-1} (5.02 TeV PbPb)", 0.042, 31);
+//     Float_t texxpos = 0.60, texypos = 0.84, texdypos = 0.06;
+//     texypos += texdypos;
+//     for(std::vector<TString>::const_iterator it=vectex.begin(); it!=vectex.end(); it++)
+//       xjjroot::drawtex(texxpos, texypos=(texypos-texdypos), *it);
+//     leg->Draw();
+
+//     c->cd();
+//     TPad* pPull = new TPad("pPull", "", 0, 0, 1, yPullpaddiv);
+//     pPull->SetMargin(xjjroot::margin_pad_left, xjjroot::margin_pad_right, 0.07*1/yPullpaddiv, 0);
+//     pPull->Draw();
+//     pPull->cd();
+//     hemptyPull->Draw();
+
+//     xjjroot::drawline(drBins[0], 1, drBins[nDrBins], 1, kBlack, 1, 2);
+//     (gSignalXsubRatio.at(1))[i]->Draw("2 same");
+//     (hSignalXsubRatio.at(1))[i]->Draw("pe same");
+//     if(jetetamin >= 0.3)
+//       {
+//         (hSignalXsubRatio.at(0))[i]->Draw("pe same");
+//       }
+//     if(plotPYTHIA)
+//       {
+//         // (gSignalXsubRatioPYTHIA.at(1))[i]->Draw("2 same");
+//         // (hSignalXsubRatioPYTHIA.at(1))[i]->Draw("pe same");
+//       }
+//     TLegend* legPull = new TLegend(0.21, 0.95-(1+int(jetetamin>=0.3)+plotPYTHIA)*0.09, 0.55, 0.95);
+//     xjjroot::setleg(legPull, 0.09);
+//     legPull->AddEntry((hSignalXsubRatio.at(1))[i], "event-mixing", "p");
+//     legPull->AddEntry((hSignalXsubRatioPYTHIA.at(1))[i], "PbPb / PYTHIA", "p");
+//     if(jetetamin >= 0.3) legPull->AddEntry((hSignalXsubRatio.at(0))[i], "#eta-ref", "p");
+//     if(jetetamin >= 0.3) legPull->Draw();
+//     c->SaveAs(Form("plotfinal/cfinal_xsec_%s_r_pt_%s_%s_comp.pdf",outputname.Data(),xjjc::number_to_string(ptBins[i]).c_str(),xjjc::number_to_string(ptBins[i+1]).c_str()));
+
+//     delete legPull;
+//     delete hemptyPull;
+//     delete hempty;
+//     delete pPull;
+//     delete pXsec;
+//     delete c;
+
+//     vectex.erase(vectex.begin());
+//   }
 
