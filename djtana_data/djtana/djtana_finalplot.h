@@ -3,6 +3,10 @@
 #include <TString.h>
 #include <TH1F.h>
 
+#ifndef lme
+#define lme 1
+#endif
+
 std::vector<TString>        tname                  = {"",                                      "_Me"};
 std::vector<TH1F**>         hSignalXsubP           = {(TH1F**)ahSignalRsubP,                   (TH1F**)ahSignalRsubMeP};
 std::vector<TH1F**>         hSignalXsubRatio       = {(TH1F**)ahSignalRsubRatio,               (TH1F**)ahSignalRsubRatioMe};
@@ -13,13 +17,37 @@ std::vector<TGraphErrors**> gSignalXsubRatioPYTHIA = {(TGraphErrors**)agSignalRs
 
 namespace finalplot
 {
-  void preparehist(int plotPYTHIA=1);
+  void preparehist(int plotPYTHIA, TString inputnamePYTHIA);
   // i: ptbin, l: bkgsub
-  TH1F* hppdndr(int i, int l=0) { return (hSignalXsubP.at(l))[0*nPtBins+i]; }
+  TH1F* hppdndr(int i, int l=1) { return (hSignalXsubP.at(l))[0*nPtBins+i]; }
+  TGraphErrors* gppdndr(int i, int l=1) { return (gSignalXsubP.at(l))[0*nPtBins+i]; }
+  TH1F* hPbPbdndr(int i, int l=1) { return (hSignalXsubP.at(l))[1*nPtBins+i]; }
+  TGraphErrors* gPbPbdndr(int i, int l=1) { return (gSignalXsubP.at(l))[1*nPtBins+i]; }
+  TH1F* hratio(int i, int l=1) { return (hSignalXsubRatio.at(l))[i]; }
+  TGraphErrors* gratio(int i, int l=1) { return (gSignalXsubRatio.at(l))[i]; }
+  TH1F* hpythiadndr(int i) { return ahSignalRsubPYTHIA[i]; }
+  TGraphErrors* gpythiadndr(int i) { return agSignalRsubPYTHIA[i]; }
+  TH1F* hpythiatopp(int i) { return ahSignalRsubRatioPYTHIAPP[i]; }
+  TGraphErrors* gpythiatopp(int i) { return agSignalRsubRatioPYTHIAPP[i]; }
 }
 
-void finalplot::preparehist(int plotPYTHIA)
+void finalplot::preparehist(int plotPYTHIA, TString inputnamePYTHIA)
 {
+  if(plotPYTHIA)
+    {
+      if(createhists("pythia")) return;
+      TFile* infhistPYTHIA = new TFile(Form("%s.root",inputnamePYTHIA.Data()));
+      if(!infhistPYTHIA->IsOpen()) return;
+      if(gethists(infhistPYTHIA, "pythia")) return;
+      for(int i=0;i<nPtBins;i++)
+        {
+          ahSignalRsubRatioPYTHIA[i]->Divide(ahSignalRsubP[1][i], ahSignalRsubPYTHIA[i]);
+          ahSignalRsubRatioPYTHIAMe[i]->Divide(ahSignalRsubMeP[1][i], ahSignalRsubPYTHIA[i]);
+          // ahSignalRsubRatioPYTHIAPP[i]->Divide(ahSignalRsubMeP[0][i], ahSignalRsubPYTHIA[i]);
+          ahSignalRsubRatioPYTHIAPP[i]->Divide(ahSignalRsubPYTHIA[i], ahSignalRsubMeP[0][i]);
+        }
+    }
+
   for(int i=0;i<nPtBins;i++)
     {
       Float_t ax[nDrBins], aex[nDrBins], ayPYTHIA[nDrBins], aeyPYTHIA[nDrBins];
